@@ -15,7 +15,7 @@ public class DeviceInitializer {
         // which handles all that stuff.
     }
 
-    MidiDevice.Info[] findMidiDevices()  {
+    MidiDevice.Info[] findMidiDevices() {
 
         Vector<MidiDevice.Info> midiDeviceInfo = new Vector<>();
         MidiDevice.Info[] allMidiDeviceInfo = MidiSystem.getMidiDeviceInfo();

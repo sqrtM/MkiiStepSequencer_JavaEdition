@@ -9,29 +9,32 @@ public class SequencerBank {
     private final int bankLength = 8;
     private final int BANK_ID = 0;
     private final int MEMORY_BANKS = 16 - bankLength;
-    private final int[] totalMemory = new int[bankLength];
+    private final boolean[] totalMemory = new boolean[bankLength];
 
     private final byte HEX_OFFSET = 112;
     private final int NOTE_OFFSET = 36;
 
+    private final boolean ACTIVE = true;
+    private final boolean INACTIVE = false;
+
     private static Receiver selectedReceiver;
 
-    private final int PAD_ADDRESS =  9;
-    private final int PAD_COLOR   = 10;
+    private final int PAD_ADDRESS = 9;
+    private final int PAD_COLOR = 10;
 
-    private final int INACTIVE_OFF = -1;
-    private final int INACTIVE_ON  =  0;
-    private final int ACTIVE_OFF   =  1;
-    private final int ACTIVE_ON    =  2;
+    private final int INACTIVE_OFF = 0;
+    private final int INACTIVE_ON = 1;
+    private final int ACTIVE_OFF = 2;
+    private final int ACTIVE_ON = 3;
 
-    private final byte COLOR_NONE   = 0x00;
-    private final byte COLOR_RED    = 0x01;
-    private final byte COLOR_GREEN  = 0x04;
+    private final byte COLOR_NONE = 0x00;
+    private final byte COLOR_RED = 0x01;
+    private final byte COLOR_GREEN = 0x04;
     private final byte COLOR_YELLOW = 0x05;
-    private final byte COLOR_BLUE   = 0x10;
-    private final byte COLOR_CYAN   = 0x14;
+    private final byte COLOR_BLUE = 0x10;
+    private final byte COLOR_CYAN = 0x14;
     private final byte COLOR_PURPLE = 0x11;
-    private final byte COLOR_WHITE  = 0x7F;
+    private final byte COLOR_WHITE = 0x7F;
 
     private byte inactiveOffColor = COLOR_CYAN;
     private byte inactiveOnColor = COLOR_PURPLE;
@@ -51,7 +54,12 @@ public class SequencerBank {
         this.bankColor = bankColor;
     }
 
-    public SequencerBank() {}
+    public SequencerBank() {
+    }
+
+    public void setSelectedReceiver(Receiver receiver) {
+        selectedReceiver = receiver;
+    }
 
 
 
@@ -76,9 +84,9 @@ public class SequencerBank {
                 }
             }
         }
-        public void close() {}
+        public void close() {
+        }
     }
-
 
 
     // sleep is just for debugging. not permanent.
@@ -87,55 +95,43 @@ public class SequencerBank {
         while (selectedReceiver != null) {
             try {
                 Thread.sleep(1000);
-                buildMessage(beat);
+                getMessageType(beat);
             } catch (InterruptedException e) {
                 System.out.println("InterruptedException Exception" + e.getMessage());
             }
             beat++;
-            if (beat >= bankLength) { beat = 0; }
-        }
-    }
-
-    public void setSelectedReceiver(Receiver receiver) {
-        selectedReceiver = receiver;
-    }
-
-    // this is sending like 6 times in a row for some reason.
-    protected void parseIncomingMessage(int padNumber) throws InvalidMidiDataException {
-        byte targetPad = (byte) (HEX_OFFSET + (padNumber - NOTE_OFFSET));
-        System.out.println(Arrays.toString(totalMemory));
-        byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
-        outgoingMessage[PAD_COLOR] = activeOnColor; outgoingMessage[PAD_ADDRESS] = targetPad;
-        sendMessage(outgoingMessage);
-        totalMemory[padNumber - NOTE_OFFSET] = totalMemory[padNumber - NOTE_OFFSET] == 0 ? 1 : 0;
-    }
-
-    private void buildMessage(int beat) throws InvalidMidiDataException {
-        byte locationInBank = (byte) (HEX_OFFSET + beat);
-        byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
-
-        for (int pad = 0; pad < bankLength; pad++) {
-            switch (totalMemory[pad]) {
-                case INACTIVE_OFF -> {
-                    outgoingMessage[PAD_COLOR] = inactiveOffColor; outgoingMessage[PAD_ADDRESS] = locationInBank;
-                    sendMessage(outgoingMessage);
-                }
-                case INACTIVE_ON -> {
-                    outgoingMessage[PAD_COLOR] = inactiveOnColor; outgoingMessage[PAD_ADDRESS] = locationInBank;
-                    sendMessage(outgoingMessage);
-                }
-                case ACTIVE_OFF -> {
-                    outgoingMessage[PAD_COLOR] = activeOffColor; outgoingMessage[PAD_ADDRESS] = locationInBank;
-                    sendMessage(outgoingMessage);
-                }
-                case ACTIVE_ON -> {
-                    outgoingMessage[PAD_COLOR] = activeOnColor; outgoingMessage[PAD_ADDRESS] = locationInBank;
-                    sendMessage(outgoingMessage);
-                }
-                default -> throw new IllegalStateException("Unexpected value: " + pad);
+            if (beat >= bankLength) {
+                beat = 0;
             }
         }
-        System.out.println(beat);
+    }
+
+    protected void parseIncomingMessage(int padNumber) throws InvalidMidiDataException {
+        byte targetPad = (byte) (HEX_OFFSET + (padNumber - NOTE_OFFSET));
+        byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
+
+        outgoingMessage[PAD_COLOR] = inactiveOnColor;
+        outgoingMessage[PAD_ADDRESS] = targetPad;
+        sendMessage(outgoingMessage);
+        totalMemory[padNumber - NOTE_OFFSET] = !totalMemory[padNumber - NOTE_OFFSET];
+    }
+
+    private void getMessageType(int beat) throws InvalidMidiDataException {
+        for (int pad = 0; pad < bankLength; pad++) {
+            byte[] currentBeatMessage = buildMessage(totalMemory[pad], pad, beat);
+            sendMessage(currentBeatMessage);
+        }
+    }
+
+    private byte[] buildMessage(boolean status, int pad, int beat) {
+        byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
+        outgoingMessage[PAD_ADDRESS] = (byte) (HEX_OFFSET + pad);
+        if (beat == pad) {
+            outgoingMessage[PAD_COLOR] = status ? activeOnColor : activeOffColor;
+        } else {
+            outgoingMessage[PAD_COLOR] = status ? inactiveOnColor : inactiveOffColor;
+        }
+        return outgoingMessage;
     }
 
     private void sendMessage(byte[] message) throws InvalidMidiDataException {

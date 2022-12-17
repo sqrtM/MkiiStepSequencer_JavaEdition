@@ -13,7 +13,7 @@ public class Main {
         // select midiIn, attempt to open the port, then open the receiver
         MidiDevice selectedMidiIn = deviceInitializer.selectMidiIn(allMidiDeviceInfo);
         deviceInitializer.openMidiDevice(selectedMidiIn);
-        Receiver selectedReceiver =  deviceInitializer.openDeviceReceiver(selectedMidiIn);
+        Receiver selectedReceiver = deviceInitializer.openDeviceReceiver(selectedMidiIn);
 
         // select midiOut, attempt to open the port, then open the transmitter
         MidiDevice selectedMidiOut = deviceInitializer.selectMidiOut(allMidiDeviceInfo);
