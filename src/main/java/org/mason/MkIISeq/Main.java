@@ -1,5 +1,7 @@
 package org.mason.MkIISeq;
 
+import org.mason.MkIISeq.sequencer.SequencerBank;
+
 import javax.sound.midi.*;
 
 public class Main {
@@ -22,8 +24,11 @@ public class Main {
 
         System.out.println("Ports configured. Initializing sequencer...");
 
-        SequencerBank Mkii = new SequencerBank();
-        SequencerBank.MidiInputReceiver MkiiReceiver = Mkii.new MidiInputReceiver("Mkii");
+        for (int i = 0; i < 8; i++){
+            //........
+        }
+        SequencerBank Mkii = new SequencerBank(0);
+        SequencerBank.MidiInputReceiver MkiiReceiver = Mkii.new MidiInputReceiver();
 
         Mkii.setSelectedReceiver(selectedReceiver);
         selectedTransmitter.setReceiver(MkiiReceiver);
