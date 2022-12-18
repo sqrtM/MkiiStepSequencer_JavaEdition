@@ -10,16 +10,13 @@ public abstract class Sequencer {
     // 8 is a placeholder; this will be mutable
     protected final int bankLength = 8;
     protected final int MEMORY_BANKS = 16 - bankLength;
-    protected final boolean[][] totalMemory = new boolean[bankLength][MEMORY_BANKS];
+    protected boolean[][] totalMemory = new boolean[MEMORY_BANKS][bankLength];
 
     protected int[] beatContainer = new int[MEMORY_BANKS];
     protected int activeMemory = 0;
 
     protected final byte HEX_OFFSET = 112;
     protected final int NOTE_OFFSET = 36;
-
-    protected final boolean ACTIVE = true;
-    protected final boolean INACTIVE = false;
 
     protected final int PAD_ADDRESS = 9;
     protected final int PAD_COLOR = 10;
@@ -52,10 +49,12 @@ public abstract class Sequencer {
             final int PAD_PRESSED = incomingMessage[1];
 
             if (PAD_PRESSED >= 36 && PAD_PRESSED <= 43) {
+                boolean [][] newTotalMemory = totalMemory.clone();
+                newTotalMemory[activeMemory][PAD_PRESSED - NOTE_OFFSET] = !newTotalMemory[activeMemory][PAD_PRESSED - NOTE_OFFSET];
+                setTotalMemory(newTotalMemory);
                 boolean isTargetPadActive = totalMemory[activeMemory][PAD_PRESSED - NOTE_OFFSET];
-                isTargetPadActive = !isTargetPadActive;
                 try {
-                    byte[] newMessage = buildMessage(isTargetPadActive, PAD_PRESSED);
+                    byte[] newMessage = buildMessage(isTargetPadActive, PAD_PRESSED - NOTE_OFFSET);
                     sendMessage(newMessage);
                 } catch (InvalidMidiDataException e) {
                     throw new RuntimeException(e);
@@ -74,7 +73,16 @@ public abstract class Sequencer {
         }
     }
 
-    private byte[] buildMemBankChangeMessage(int newBank) {
+    protected boolean[][] getTotalMemory() {
+        return totalMemory;
+    }
+
+    protected void setTotalMemory(boolean[][] newTotalMemory) {
+        this.totalMemory = newTotalMemory;
+        System.out.println("setting " + Arrays.toString(getTotalMemory()[activeMemory]) + "to " + Arrays.toString(newTotalMemory[activeMemory]));
+    }
+
+    protected byte[] buildMemBankChangeMessage(int newBank) {
         byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
         outgoingMessage[PAD_ADDRESS] = (byte) (HEX_OFFSET + newBank);
         outgoingMessage[PAD_COLOR] = bankColor;
@@ -85,10 +93,12 @@ public abstract class Sequencer {
         byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
         outgoingMessage[PAD_ADDRESS] = (byte) (HEX_OFFSET + pad);
         if (beatContainer[activeMemory] == pad) {
-            outgoingMessage[PAD_COLOR] = status == ACTIVE   ? activeOnColor  : inactiveOnColor;
+            outgoingMessage[PAD_COLOR] = status ? activeOnColor  : inactiveOnColor;
+
         } else {
-            outgoingMessage[PAD_COLOR] = status == INACTIVE ? inactiveOffColor : activeOffColor;
+            outgoingMessage[PAD_COLOR] = status ? activeOffColor : inactiveOffColor;
         }
+
         return outgoingMessage;
     }
 

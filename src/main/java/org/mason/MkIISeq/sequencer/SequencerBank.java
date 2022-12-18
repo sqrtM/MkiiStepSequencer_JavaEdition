@@ -1,35 +1,27 @@
 package org.mason.MkIISeq.sequencer;
 
+
 import javax.sound.midi.*;
+import java.util.Arrays;
 
 public class SequencerBank extends Sequencer {
 
-    public SequencerBank(int bankID) {
+    private final int BANK_ID;
+
+    public SequencerBank(int bankID, Receiver receiver) {
         this.BANK_ID = bankID;
-    }
-
-    private int BANK_ID;
-
-    public void setSelectedReceiver(Receiver receiver) {
         selectedReceiver = receiver;
-    }
-
-    public SequencerBank(byte inactiveOffColor, byte inactiveOnColor, byte activeOnColor, byte activeOffColor, byte bankColor) {
-        this.inactiveOffColor = inactiveOffColor;
-        this.inactiveOnColor = inactiveOnColor;
-        this.activeOnColor = activeOnColor;
-        this.activeOffColor = activeOffColor;
-        this.bankColor = bankColor;
     }
 
     // sleep is just for debugging. not permanent.
     public void mainLoop() throws InvalidMidiDataException {
-        while (selectedReceiver != null) {
+        while (selectedReceiver != null && activeMemory == BANK_ID) {
             try {
                 Thread.sleep(500);
+
                 for (int pad = 0; pad < bankLength; pad++) {
-                    byte[] newMessage = buildMessage(totalMemory[BANK_ID][pad], pad);
-                    sendMessage(newMessage);
+                        byte[] newMessage = buildMessage(getTotalMemory()[BANK_ID][pad], pad);
+                        sendMessage(newMessage);
                 }
             } catch (InterruptedException e) {
                 System.out.println("InterruptedException Exception" + e.getMessage());

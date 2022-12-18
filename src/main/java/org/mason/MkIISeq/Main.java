@@ -6,7 +6,7 @@ import javax.sound.midi.*;
 
 public class Main {
 
-    public static void main(String[] args) throws MidiUnavailableException, InvalidMidiDataException {
+    public static void main(String[] args) throws MidiUnavailableException {
         DeviceInitializer deviceInitializer = new DeviceInitializer();
 
         // get list of all midi ports
@@ -24,16 +24,13 @@ public class Main {
 
         System.out.println("Ports configured. Initializing sequencer...");
 
-        for (int i = 0; i < 8; i++){
-            //........
-        }
-        SequencerBank Mkii = new SequencerBank(0);
-        SequencerBank.MidiInputReceiver MkiiReceiver = Mkii.new MidiInputReceiver();
-
-        Mkii.setSelectedReceiver(selectedReceiver);
+        SequencerBank.MidiInputReceiver MkiiReceiver = new SequencerBank(-1, selectedReceiver).new MidiInputReceiver();
         selectedTransmitter.setReceiver(MkiiReceiver);
 
-        Mkii.mainLoop();
+        for (int i = 0; i < 8; i++){
+            Thread sequencerBankThread = new Thread(new MultiThreadSequencer(i, selectedReceiver));
+            sequencerBankThread.start();
+        }
     }
-
 }
+
