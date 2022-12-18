@@ -1,6 +1,5 @@
 package org.mason.MkIISeq.sequencer;
 
-
 import javax.sound.midi.*;
 import java.util.Arrays;
 
@@ -15,21 +14,24 @@ public class SequencerBank extends Sequencer {
 
     // sleep is just for debugging. not permanent.
     public void mainLoop() throws InvalidMidiDataException {
-        while (selectedReceiver != null && activeMemory == BANK_ID) {
+        while (selectedReceiver != null && getActiveMemory() == BANK_ID) {
             try {
-                Thread.sleep(500);
-
+                System.out.println(Arrays.toString(getTotalMemory()[getActiveMemory()]));
+                Thread.sleep(1000);
+                boolean[][] currentTotalMemory = getTotalMemory();
                 for (int pad = 0; pad < bankLength; pad++) {
-                        byte[] newMessage = buildMessage(getTotalMemory()[BANK_ID][pad], pad);
+                        byte[] newMessage = buildMessage(currentTotalMemory[BANK_ID][pad], pad);
                         sendMessage(newMessage);
                 }
             } catch (InterruptedException e) {
                 System.out.println("InterruptedException Exception" + e.getMessage());
             }
-            beatContainer[BANK_ID]++;
-            if (beatContainer[BANK_ID] >= bankLength) {
-                beatContainer[BANK_ID] = 0;
+            int[] newBeatContainer = getBeatContainer();
+            newBeatContainer[BANK_ID]++;
+            if (newBeatContainer[BANK_ID] >= bankLength) {
+                newBeatContainer[BANK_ID] = 0;
             }
+            setBeatContainer(newBeatContainer);
         }
     }
 }
