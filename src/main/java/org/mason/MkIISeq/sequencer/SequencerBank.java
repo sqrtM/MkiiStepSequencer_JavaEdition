@@ -1,37 +1,45 @@
 package org.mason.MkIISeq.sequencer;
 
 import javax.sound.midi.*;
-import java.util.Arrays;
+
+import static java.lang.Math.*;
 
 public class SequencerBank extends Sequencer {
 
     private final int BANK_ID;
+    private final char INITIAL_STATE = 0b1000_0000_0000_0000;
 
-    public SequencerBank(int bankID, Receiver receiver) {
-        this.BANK_ID = bankID;
-        selectedReceiver = receiver;
+    private char sequencerMemory = INITIAL_STATE;
+    private int beatLocation = INITIAL_STATE;
+
+    private final Receiver virtualReceiver;
+
+    protected char getSequencerMemory() {
+        return sequencerMemory;
     }
 
-    // sleep is just for debugging. not permanent.
+    protected void setSequencerMemory(char newMemory) {
+        this.sequencerMemory = newMemory;
+    }
+
+    public SequencerBank(int bankID, Receiver receiver, Receiver virtualReceiver) {
+        this.BANK_ID = bankID;
+        selectedReceiver = receiver;
+        this.virtualReceiver = virtualReceiver;
+    }
+
     public void mainLoop() throws InvalidMidiDataException {
-        while (selectedReceiver != null && getActiveMemory() == BANK_ID) {
+        while ((selectedReceiver != null) && (getActiveMemory() == BANK_ID)) {
             try {
-                System.out.println(Arrays.toString(getTotalMemory()[getActiveMemory()]));
                 Thread.sleep(1000);
-                boolean[][] currentTotalMemory = getTotalMemory();
                 for (int pad = 0; pad < bankLength; pad++) {
-                        byte[] newMessage = buildMessage(currentTotalMemory[BANK_ID][pad], pad);
-                        sendMessage(newMessage);
+                    byte[] newMessage = buildMessage(sequencerMemory, beatLocation);
+                    sendMessage(newMessage);
                 }
             } catch (InterruptedException e) {
                 System.out.println("InterruptedException Exception" + e.getMessage());
             }
-            int[] newBeatContainer = getBeatContainer();
-            newBeatContainer[BANK_ID]++;
-            if (newBeatContainer[BANK_ID] >= bankLength) {
-                newBeatContainer[BANK_ID] = 0;
-            }
-            setBeatContainer(newBeatContainer);
+            beatLocation = (beatLocation > (INITIAL_STATE >> (bankLength - 1))) ? (beatLocation >> 1) : INITIAL_STATE;
         }
     }
 }

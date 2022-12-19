@@ -1,18 +1,41 @@
 package org.mason.MkIISeq.sequencer;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiMessage;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.SysexMessage;
+
+import static java.lang.Math.*;
 
 public abstract class Sequencer {
     // 8 is a placeholder; this will be mutable
     protected final int bankLength = 8;
-    protected final int MEMORY_BANKS = 16 - bankLength;
-
-    private boolean[][] totalMemory = new boolean[MEMORY_BANKS][bankLength];
     private int activeMemory = 0;
-    private int[] beatContainer = new int[MEMORY_BANKS];
+
+    /*
+    what im thinking is that instead of trying to solve the inheretance
+    problem is i should go back to the original idea wherein there
+    is no "2d array" stored statically. just individual arrays
+    each operating completely independently.
+
+    the above fields should all be blank and instantiated in the
+    subclass. maybe this should even be an interface rather than an
+    abstract class?
+
+    VirtualMidiReceiver (VMR) will need to be rethought. maybe I will
+    need to add an argument which takes the bankID? or the full
+    array, even. it could even be translated into a binary number
+    which would be kind of swag, if not a little too cute.
+
+    So then, the VMR would not even need to "get" anything from anywhere.
+    the only thing it inherits beyond getters and setters are NOTE_OFFSET
+    and bankLength which are both not worth a full inhereitance.
+
+    theoretically, the receiver could just simply pull in the message and
+    return it wholesale, having the sequencer itself deal with it in its
+    entirety. it does certainly seem to be doing a little more than just
+    "receiving", so I would imagine the answer isn't in abandoning OOP
+    but rather in rethinking what all these fucking classes are doing.
+     */
 
     private final byte HEX_OFFSET = 112;
     protected final int NOTE_OFFSET = 36;
@@ -20,34 +43,15 @@ public abstract class Sequencer {
     private final int PAD_ADDRESS = 9;
     private final int PAD_COLOR = 10;
 
-    private final byte COLOR_NONE = 0x00;
-    private final byte COLOR_RED = 0x01;
-    private final byte COLOR_GREEN = 0x04;
-    private final byte COLOR_YELLOW = 0x05;
-    private final byte COLOR_BLUE = 0x10;
-    private final byte COLOR_CYAN = 0x14;
-    private final byte COLOR_PURPLE = 0x11;
-    private final byte COLOR_WHITE = 0x7F;
-
-    private final byte inactiveOffColor = COLOR_CYAN;
-    private final byte inactiveOnColor = COLOR_PURPLE;
-    private final byte activeOnColor = COLOR_WHITE;
-    private final byte activeOffColor = COLOR_GREEN;
-    private final byte bankColor = COLOR_BLUE;
+    private final byte inactiveOffColor = Color.CYAN.getColor();
+    private final byte inactiveOnColor = Color.PURPLE.getColor();
+    private final byte activeOnColor = Color.WHITE.getColor();
+    private final byte activeOffColor = Color.GREEN.getColor();
+    private final byte bankColor = Color.BLUE.getColor();
 
     private final byte[] mkiiDefaultSysexMessage = {
             (byte) 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x02, 0x00, 0x10, 0x70, 0x14, (byte) 0xF7
     };
-
-    protected static Receiver selectedReceiver;
-
-    protected boolean[][] getTotalMemory() {
-        return totalMemory;
-    }
-
-    protected void setTotalMemory(boolean[][] newTotalMemory) {
-        this.totalMemory = newTotalMemory;
-    }
 
     protected int getActiveMemory() {
         return activeMemory;
@@ -57,14 +61,6 @@ public abstract class Sequencer {
         this.activeMemory = newActiveMemory;
     }
 
-    protected int[] getBeatContainer() {
-        return beatContainer;
-    }
-
-    protected void setBeatContainer(int[] newBeatContainer) {
-        this.beatContainer = newBeatContainer;
-    }
-
     protected byte[] buildMemBankChangeMessage(int newBank) {
         byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
         outgoingMessage[PAD_ADDRESS] = (byte) (HEX_OFFSET + newBank);
@@ -72,15 +68,22 @@ public abstract class Sequencer {
         return outgoingMessage;
     }
 
-    protected byte[] buildMessage(boolean status, int pad) {
-        byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
-        outgoingMessage[PAD_ADDRESS] = (byte) (HEX_OFFSET + pad);
-        if (beatContainer[activeMemory] == pad) {
-            outgoingMessage[PAD_COLOR] = status ? activeOnColor  : inactiveOnColor;
+    protected Receiver selectedReceiver;
 
-        } else {
-            outgoingMessage[PAD_COLOR] = status ? activeOffColor : inactiveOffColor;
+    protected byte[] buildMessage(char sequencerMemory, int beatLocation) {
+        byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
+        byte beat = (byte) abs((((log(beatLocation) / log(2)) + 1) - bankLength) - bankLength);
+        System.out.println(beat);
+
+        for (int i = 0; i <= log10(sequencerMemory); i++) {
+            int status = (sequencerMemory & (1 << i)) >> i;
+            if (status == 1) {
+                outgoingMessage[PAD_COLOR] = beat == i ? activeOnColor  : inactiveOnColor;
+            } else {
+                outgoingMessage[PAD_COLOR] = beat == i ? activeOffColor : inactiveOffColor;
+            }
         }
+        outgoingMessage[PAD_ADDRESS] = (byte) (beat + HEX_OFFSET);
         return outgoingMessage;
     }
 
