@@ -50,7 +50,10 @@ public abstract class Sequencer {
     private final byte bankColor = Color.BLUE.getColor();
 
     private final byte[] mkiiDefaultSysexMessage = {
-            (byte) 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x02, 0x00, 0x10, 0x70, 0x14, (byte) 0xF7
+            (byte) 0xF0, 0x00, 0x20,
+            0x6B, 0x7F, 0x42, 0x02,
+            0x00, 0x10, 0x70,
+            0x14, (byte) 0xF7
     };
 
     protected int getActiveMemory() {
@@ -70,21 +73,25 @@ public abstract class Sequencer {
 
     protected Receiver selectedReceiver;
 
-    protected byte[] buildMessage(char sequencerMemory, int beatLocation) {
+    /*
+    what this SHOULD do is return a byte array of length bankLength which are all valid outgoing
+    messages. we can then send that to the sendMessage function and it will iterate through the
+    array and send each one individually. but that seems like O*2 work....
+     */
+    protected void buildMessage(int sequencerMemory, int beatLocation) throws InvalidMidiDataException {
         byte[] outgoingMessage = mkiiDefaultSysexMessage.clone();
-        byte beat = (byte) abs((((log(beatLocation) / log(2)) + 1) - bankLength) - bankLength);
-        System.out.println(beat);
+        byte beat = (byte) (log(beatLocation) / log(2));
 
-        for (int i = 0; i <= log10(sequencerMemory); i++) {
+        for (int i = 0; i < bankLength; i++) {
             int status = (sequencerMemory & (1 << i)) >> i;
             if (status == 1) {
                 outgoingMessage[PAD_COLOR] = beat == i ? activeOnColor  : inactiveOnColor;
             } else {
                 outgoingMessage[PAD_COLOR] = beat == i ? activeOffColor : inactiveOffColor;
             }
+            outgoingMessage[PAD_ADDRESS] = (byte) (i + HEX_OFFSET);
+            sendMessage(outgoingMessage);
         }
-        outgoingMessage[PAD_ADDRESS] = (byte) (beat + HEX_OFFSET);
-        return outgoingMessage;
     }
 
     protected void sendMessage(byte[] message) throws InvalidMidiDataException {

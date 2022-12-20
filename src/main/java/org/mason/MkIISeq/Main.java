@@ -25,10 +25,9 @@ public class Main {
 
         System.out.println("Ports configured. Initializing sequencer...");
 
-        VirtualMIDIReceiver MkiiReceiver = new VirtualMIDIReceiver();
-        selectedTransmitter.setReceiver(MkiiReceiver);
 
-        SequencerBank newSeq = new SequencerBank(0, selectedReceiver, MkiiReceiver);
+        SequencerBank newSeq = new SequencerBank(0, selectedReceiver);
+        selectedTransmitter.setReceiver(newSeq);
         newSeq.mainLoop();
 
         //for (int i = 0; i < 8; i++){
