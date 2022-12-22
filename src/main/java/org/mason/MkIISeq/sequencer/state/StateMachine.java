@@ -1,4 +1,4 @@
-package org.mason.MkIISeq.sequencer;
+package org.mason.MkIISeq.sequencer.state;
 
 import java.util.Arrays;
 import java.util.List;

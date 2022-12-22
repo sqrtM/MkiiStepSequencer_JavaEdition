@@ -1,4 +1,4 @@
-package org.mason.MkIISeq.sequencer;
+package org.mason.MkIISeq.sequencer.state;
 
 public class StateEntry {
 
