@@ -1,5 +1,7 @@
 package org.mason.MkIISeq.sequencer;
 
+import org.mason.MkIISeq.GUI.Window;
+
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.SysexMessage;
@@ -98,5 +100,6 @@ public abstract class Sequencer {
         SysexMessage finalMessage = new SysexMessage();
         finalMessage.setMessage(message, 12);
         selectedReceiver.send(finalMessage, -1);
+        Window.setInfo(message);
     }
 }
