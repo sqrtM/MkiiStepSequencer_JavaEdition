@@ -15,7 +15,7 @@ public class SequencerBank implements Receiver {
     private int activeMemory = 0;
 
     protected final int NOTE_OFFSET = 36;
-    private final byte HEX_OFFSET = 112;
+    private final byte HEX_OFFSET = 0x70; // 112
 
     private final int PAD_ADDRESS = 9;
     private final int PAD_COLOR = 10;
@@ -68,9 +68,11 @@ public class SequencerBank implements Receiver {
             buildMessage(state.getSequencerState(index), state.getBeatState(index));
         }
         char beat = state.getBeatState(index);
-        // read: if beat is less than one minus one left shifted bankLength times...
-        // beat left shifts by one. otherwise, set it to the initial state of "1".
+        // read: "if beat is less than one minus one left shifted bankLength times...
+        // beat increments left by one. otherwise, set it to the initial state of "1"".
         state.setBeatState(index, (char) ((beat < (1 << (bankLength - 1))) ? (beat << 1) : 1));
+        // java's big endian-ness makes this "increment left" idea a little confusing,
+        // but just think of it like a unary ++ operation and it feels less weird.
     }
 
     @Override
@@ -90,6 +92,9 @@ public class SequencerBank implements Receiver {
         } else {
             int incomingBinaryMessage = (int) pow(2, incomingMessage - NOTE_OFFSET);
             char currentActiveState = state.getSequencerState(getActiveMemory());
+            // while a little opaque, this bitwise NOR finds the button you just pressed and flips
+            // the status for you in the state without having to do any array manip, which is honestly
+            // quite convenient, if not needlessly obtuse.
             state.setSequencerState(getActiveMemory(), (char) (currentActiveState ^ incomingBinaryMessage));
             buildMessage(currentActiveState, state.getBeatState(getActiveMemory()));
         }
@@ -103,8 +108,9 @@ public class SequencerBank implements Receiver {
     }
 
     /*
-    what this SHOULD do is return a byte array of length bankLength which are all valid outgoing
-    messages. we can then send that to the sendMessage function and it will iterate through the
+    what this probably SHOULD do if we're going to obey the law of "every function should do one thing"
+    is return a byte[][] of length bankLength which are all valid outgoing
+    messages. we can then send that to the sendMessage function, and it will iterate through the
     array and send each one individually. but that seems like O*2 work....
     */
     protected void buildMessage(int sequencerMemory, int beatLocation) throws InvalidMidiDataException {
@@ -112,6 +118,11 @@ public class SequencerBank implements Receiver {
         byte beat = (byte) (log(beatLocation) / log(2));
 
         for (int i = 0; i < bankLength; i++) {
+            // bitwise magic here to find the
+            // beat "index" within the binary number
+            // and return whether or not it's flipped.
+            // definitely has the "cool" factor, but is too
+            // "cute" for a serious production.
             int status = (sequencerMemory & (1 << i)) >> i;
             if (status == 1) {
                 outgoingMessage[PAD_COLOR] = beat == i ? activeOnColor  : inactiveOnColor;
@@ -125,7 +136,7 @@ public class SequencerBank implements Receiver {
 
     protected void sendMessage(byte[] message) throws InvalidMidiDataException {
         SysexMessage finalMessage = new SysexMessage();
-        finalMessage.setMessage(message, 12);
+        finalMessage.setMessage(message, mkiiDefaultSysexMessage.length);
         selectedReceiver.send(finalMessage, -1);
         Window.setInfo(message);
     }
