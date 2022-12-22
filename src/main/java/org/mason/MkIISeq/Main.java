@@ -1,13 +1,11 @@
 package org.mason.MkIISeq;
 
-import org.mason.MkIISeq.sequencer.VirtualMIDIReceiver;
 import org.mason.MkIISeq.sequencer.SequencerBank;
-
 import javax.sound.midi.*;
 
 public class Main {
 
-    public static void main(String[] args) throws MidiUnavailableException, InvalidMidiDataException {
+    public static void main(String[] args) throws MidiUnavailableException {
         DeviceInitializer deviceInitializer = new DeviceInitializer();
 
         // get list of all midi ports
@@ -25,15 +23,9 @@ public class Main {
 
         System.out.println("Ports configured. Initializing sequencer...");
 
-
-        SequencerBank newSeq = new SequencerBank(0, selectedReceiver);
+        SequencerBank newSeq = new SequencerBank(selectedReceiver);
         selectedTransmitter.setReceiver(newSeq);
-        newSeq.mainLoop();
-
-        //for (int i = 0; i < 8; i++){
-        //    Thread sequencerBankThread = new Thread(new MultiThreadSequencer(i, selectedReceiver));
-        //    sequencerBankThread.start();
-        //}
+        newSeq.initThreads();
     }
 }
 
