@@ -6,36 +6,40 @@ import java.util.Arrays;
 
 public class Window {
 
-    private static byte[] info;
+    private byte[] info;
 
-    public static void setInfo(byte[] newInfo) {
+    public void setInfo(byte[] newInfo) {
         info = newInfo;
     }
 
-    private static byte[] getInfo() {
+    private byte[] getInfo() {
         return info;
     }
 
-    public static void createAndShowGUI() {
+    public void createAndShowGUI() {
         JFrame frame = new JFrame("Java Step Sequencer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new Panel());
-        frame.pack();
-        frame.setVisible(true);
+        for (int i = 0; i < 8; i++) {
+            frame.add(new Panel(i));
+            frame.pack();
+            frame.setVisible(true);
+        }
     }
 
-    static class Panel extends JPanel {
-        public Panel() {
+    class Panel extends JPanel {
+        private final int index;
+        public Panel(int index) {
+            this.index = index;
             setBorder(BorderFactory.createLineBorder(Color.blue));
         }
 
         public Dimension getPreferredSize() {
-            return new Dimension(250,200);
+            return new Dimension(250,50);
         }
 
         public void paintComponent(Graphics graphics) {
             super.paintComponent(graphics);
-            graphics.drawString(Arrays.toString(getInfo()),10,20);
+            graphics.drawString(Arrays.toString(getInfo()),10,index * 20);
         }
     }
 

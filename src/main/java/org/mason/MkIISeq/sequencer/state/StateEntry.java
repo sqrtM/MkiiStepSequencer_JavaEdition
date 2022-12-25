@@ -1,6 +1,6 @@
 package org.mason.MkIISeq.sequencer.state;
 
-public class StateEntry {
+class StateEntry {
 
     private final char INITIAL_BEAT_STATE      = 0b0000_0000_0000_0001;
     private final char INITIAL_SEQUENCER_STATE = 0b0000_0000_0000_0000;

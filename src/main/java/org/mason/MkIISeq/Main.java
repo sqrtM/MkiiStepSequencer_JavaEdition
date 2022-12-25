@@ -1,9 +1,7 @@
 package org.mason.MkIISeq;
 
-import org.mason.MkIISeq.GUI.Window;
 import org.mason.MkIISeq.sequencer.SequencerBank;
 import javax.sound.midi.*;
-import javax.swing.*;
 
 public class Main {
 
@@ -28,8 +26,8 @@ public class Main {
         SequencerBank newSeq = new SequencerBank(selectedReceiver);
         selectedTransmitter.setReceiver(newSeq);
 
-        SwingUtilities.invokeLater(Window::createAndShowGUI);
-
+        newSeq.GUI.createAndShowGUI();
+        System.out.println("Sequencer initialized. Starting.");
         newSeq.initThreads();
     }
 }

@@ -7,7 +7,7 @@ import java.util.Vector;
 import static java.lang.Integer.parseInt;
 import static javax.sound.midi.MidiSystem.getMidiDevice;
 
-public class DeviceInitializer {
+class DeviceInitializer {
 
     void initialize() {
         // there is a cleaner way to do that Main function;
@@ -27,9 +27,9 @@ public class DeviceInitializer {
         return allMidiDeviceInfo;
     }
 
-    MidiDevice selectMidiIn(MidiDevice.Info[] allMidiDeviceInfo) throws MidiUnavailableException {
+    Scanner in = new Scanner(System.in);
 
-        Scanner in = new Scanner(System.in);
+    MidiDevice selectMidiIn(MidiDevice.Info[] allMidiDeviceInfo) throws MidiUnavailableException {
 
         System.out.println("Please select a valid MIDI IN port from the list above.");
         MidiDevice.Info selectedDeviceInfo = allMidiDeviceInfo[parseInt(in.nextLine())];
@@ -38,8 +38,6 @@ public class DeviceInitializer {
     }
 
     MidiDevice selectMidiOut(MidiDevice.Info[] allMidiDeviceInfo) throws MidiUnavailableException {
-
-        Scanner in = new Scanner(System.in);
 
         System.out.println("Please select a valid MIDI Out port from the list above.");
         MidiDevice.Info selectedDeviceInfo = allMidiDeviceInfo[parseInt(in.nextLine())];

@@ -10,8 +10,10 @@ import static java.lang.Math.pow;
 
 public class SequencerBank implements Receiver {
 
-    protected Receiver selectedReceiver;
-    protected final int bankLength = 8;
+    private final Receiver selectedReceiver;
+    // bankLength is temporarily final.
+    // it will be made mutable in the future.
+    private final int bankLength = 8;
     private int activeMemory = 0;
 
     protected final int NOTE_OFFSET = 36;
@@ -45,12 +47,13 @@ public class SequencerBank implements Receiver {
     }
 
     StateMachine state = new StateMachine();
+    public Window GUI = new Window();
 
     public void initThreads() {
         for(int i = 0; i < 8; i++) {
             int index = i;
             state.setSequencerThread(i, new Thread(() -> {
-                 while((selectedReceiver != null)) {
+                 while(selectedReceiver != null) {
                      try {
                          mainLoop(index);
                          Thread.sleep(200 * index);
@@ -68,9 +71,11 @@ public class SequencerBank implements Receiver {
             buildMessage(state.getSequencerState(index), state.getBeatState(index));
         }
         char beat = state.getBeatState(index);
-        // read: "if beat is less than one minus one left shifted bankLength times...
+        // read: "if beat is less than (one) minus (one left shifted bankLength-1 times)...
         // beat increments left by one. otherwise, set it to the initial state of "1"".
-        state.setBeatState(index, (char) ((beat < (1 << (bankLength - 1))) ? (beat << 1) : 1));
+        state.setBeatState(index, (char) (
+                beat < 1 << bankLength - 1 ? (beat << 1) : 1
+        ));
         // java's big endian-ness makes this "increment left" idea a little confusing,
         // but just think of it like a unary ++ operation and it feels less weird.
     }
@@ -86,13 +91,14 @@ public class SequencerBank implements Receiver {
     }
 
     private void handleIncomingMessage(byte incomingMessage) throws InvalidMidiDataException {
-        if (incomingMessage >= NOTE_OFFSET + bankLength
-                && incomingMessage < NOTE_OFFSET + 16) {
+        if (incomingMessage >= NOTE_OFFSET + bankLength && incomingMessage < NOTE_OFFSET + 16) {
             setActiveMemory(incomingMessage - NOTE_OFFSET - bankLength);
         } else {
-            int incomingBinaryMessage = (int) pow(2, incomingMessage - NOTE_OFFSET);
+            // TODO : double check that this char cast @98 doesn't fuck with everything
+            // it may need to be an int
+            char incomingBinaryMessage = (char) pow(2, incomingMessage - NOTE_OFFSET);
             char currentActiveState = state.getSequencerState(getActiveMemory());
-            // while a little opaque, this bitwise NOR finds the button you just pressed and flips
+            // while a little opaque, this bitwise XOR finds the button you just pressed and flips
             // the status for you in the state without having to do any array manip, which is honestly
             // quite convenient, if not needlessly obtuse.
             state.setSequencerState(getActiveMemory(), (char) (currentActiveState ^ incomingBinaryMessage));
@@ -118,11 +124,9 @@ public class SequencerBank implements Receiver {
         byte beat = (byte) (log(beatLocation) / log(2));
 
         for (int i = 0; i < bankLength; i++) {
-            // bitwise magic here to find the
-            // beat "index" within the binary number
-            // and return whether or not it's flipped.
-            // definitely has the "cool" factor, but is too
-            // "cute" for a serious production.
+            // bitwise magic here to find the beat "index" within the binary number
+            // and return whether or not it's flipped. definitely has the "cool" factor,
+            // but is a little too "cute" for a serious production.
             int status = (sequencerMemory & (1 << i)) >> i;
             if (status == 1) {
                 outgoingMessage[PAD_COLOR] = beat == i ? activeOnColor  : inactiveOnColor;
@@ -138,7 +142,7 @@ public class SequencerBank implements Receiver {
         SysexMessage finalMessage = new SysexMessage();
         finalMessage.setMessage(message, mkiiDefaultSysexMessage.length);
         selectedReceiver.send(finalMessage, -1);
-        Window.setInfo(message);
+        GUI.setInfo(message);
     }
 
     public void close() {
