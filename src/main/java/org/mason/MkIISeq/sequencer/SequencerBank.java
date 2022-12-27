@@ -56,7 +56,7 @@ public class SequencerBank implements Receiver {
                  while(selectedReceiver != null) {
                      try {
                          mainLoop(index);
-                         Thread.sleep(200 * index);
+                         Thread.sleep(400);
                      } catch (InterruptedException | InvalidMidiDataException e) {
                          throw new RuntimeException(e);
                      }
@@ -94,8 +94,6 @@ public class SequencerBank implements Receiver {
         if (incomingMessage >= NOTE_OFFSET + bankLength && incomingMessage < NOTE_OFFSET + 16) {
             setActiveMemory(incomingMessage - NOTE_OFFSET - bankLength);
         } else {
-            // TODO : double check that this char cast @98 doesn't fuck with everything
-            // it may need to be an int
             char incomingBinaryMessage = (char) pow(2, incomingMessage - NOTE_OFFSET);
             char currentActiveState = state.getSequencerState(getActiveMemory());
             // while a little opaque, this bitwise XOR finds the button you just pressed and flips
@@ -103,6 +101,7 @@ public class SequencerBank implements Receiver {
             // quite convenient, if not needlessly obtuse.
             state.setSequencerState(getActiveMemory(), (char) (currentActiveState ^ incomingBinaryMessage));
             buildMessage(currentActiveState, state.getBeatState(getActiveMemory()));
+            GUI.setInfo(currentActiveState);
         }
     }
 
@@ -142,7 +141,6 @@ public class SequencerBank implements Receiver {
         SysexMessage finalMessage = new SysexMessage();
         finalMessage.setMessage(message, mkiiDefaultSysexMessage.length);
         selectedReceiver.send(finalMessage, -1);
-        GUI.setInfo(message);
     }
 
     public void close() {

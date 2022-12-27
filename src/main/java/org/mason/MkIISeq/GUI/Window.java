@@ -2,28 +2,27 @@ package org.mason.MkIISeq.GUI;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 
 public class Window {
 
-    private byte[] info;
+    private char info;
+    private final JFrame frame = new JFrame("Java Step Sequencer");
 
-    public void setInfo(byte[] newInfo) {
+
+    public void setInfo(char newInfo) {
         info = newInfo;
+        frame.repaint();
     }
 
-    private byte[] getInfo() {
+    private char getInfo() {
         return info;
     }
 
     public void createAndShowGUI() {
-        JFrame frame = new JFrame("Java Step Sequencer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        for (int i = 0; i < 8; i++) {
-            frame.add(new Panel(i));
-            frame.pack();
-            frame.setVisible(true);
-        }
+        frame.add(new Panel(1));
+        frame.pack();
+        frame.setVisible(true);
     }
 
     class Panel extends JPanel {
@@ -39,7 +38,7 @@ public class Window {
 
         public void paintComponent(Graphics graphics) {
             super.paintComponent(graphics);
-            graphics.drawString(Arrays.toString(getInfo()),10,index * 20);
+            graphics.drawString(Integer.toBinaryString(Integer.parseInt(String.valueOf((int) getInfo()))),10,index * 20);
         }
     }
 
