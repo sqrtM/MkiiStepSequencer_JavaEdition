@@ -1,6 +1,7 @@
 package org.mason.MkIISeq;
 
-import org.mason.MkIISeq.sequencer.SequencerBank;
+import org.mason.MkIISeq.Entity.Sequencer;
+
 import javax.sound.midi.*;
 
 public class Main {
@@ -23,12 +24,11 @@ public class Main {
 
         System.out.println("Ports configured. Initializing sequencer...");
 
-        SequencerBank newSeq = new SequencerBank(selectedReceiver);
+        Sequencer newSeq = new Sequencer(selectedReceiver);
         selectedTransmitter.setReceiver(newSeq);
 
-        newSeq.GUI.createAndShowGUI();
+        //newSeq.GUI.createAndShowGUI();
         System.out.println("Sequencer initialized. Starting.");
-        newSeq.initThreads();
     }
 }
 

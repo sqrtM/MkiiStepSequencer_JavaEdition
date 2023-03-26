@@ -1,6 +1,6 @@
 package org.mason.MkIISeq.sequencer;
 
-enum Color {
+public enum Color {
     NONE((byte) 0x00),
     RED((byte) 0x01),
     GREEN((byte) 0x04),

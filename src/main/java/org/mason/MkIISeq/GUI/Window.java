@@ -2,20 +2,17 @@ package org.mason.MkIISeq.GUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 public class Window {
 
-    private char info;
+    private int[] info;
     private final JFrame frame = new JFrame("Java Step Sequencer");
 
 
-    public void setInfo(char newInfo) {
+    public void setInfo(int[] newInfo) {
         info = newInfo;
         frame.repaint();
-    }
-
-    private char getInfo() {
-        return info;
     }
 
     public void createAndShowGUI() {
@@ -38,7 +35,7 @@ public class Window {
 
         public void paintComponent(Graphics graphics) {
             super.paintComponent(graphics);
-            graphics.drawString(Integer.toBinaryString(Integer.parseInt(String.valueOf((int) getInfo()))),10,index * 20);
+            graphics.drawString(Arrays.toString(info),10,index * 20);
         }
     }
 
